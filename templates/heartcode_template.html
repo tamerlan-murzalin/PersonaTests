@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>HeartCode PDF</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #fff; color: #333; margin: 30px; }
+    h1 { color: #e63946; }
+    h2 { color: #457b9d; margin-top: 20px; }
+    p { font-size: 16px; line-height: 1.5; }
+    ul { list-style: disc; padding-left: 20px; }
+    .symbol { font-size: 36px; }
+    .intro { margin-bottom: 20px; font-style: italic; }
+    hr { margin-top: 40px; margin-bottom: 40px; }
+    .page-break { page-break-after: always; }
+  </style>
+</head>
+<body>
+  {{#each archetypes}}
+  <div class="archetype">
+    <h1>Твой стиль в любви: <span class="archetype-name">{{name}}</span> <span class="symbol">{{symbol}}</span></h1>
+    <p class="intro">{{description}}</p>
+
+    <h2>Поведение в отношениях</h2>
+    <p>{{behavior}}</p>
+
+    <h2>Что привлекает партнёра</h2>
+    <p>{{attraction}}</p>
+
+    <h2>Что может мешать</h2>
+    <p>{{problems}}</p>
+
+    <h2>Советы</h2>
+    <ul>
+      {{#each tips}}
+        <li>{{this}}</li>
+      {{/each}}
+    </ul>
+
+    <hr class="page-break">
+  </div>
+  {{/each}}
+
+  <p style="text-align:center; margin-top:40px;">HeartCode Team – Расшифруй свой стиль любви</p>
+</body>
+</html>

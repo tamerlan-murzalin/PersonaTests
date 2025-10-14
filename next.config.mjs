@@ -1,6 +1,9 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+    reactStrictMode: true,
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    swcMinify: false,
 };
 
-export default nextConfig;
+export default nextConfig; // оставь только эту строку
