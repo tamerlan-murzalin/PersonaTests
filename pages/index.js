@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import archetypesData from '../data/Archetypes.json';
 
 const questions = [
@@ -8,7 +9,8 @@ const questions = [
 ];
 
 export default function Home() {
-  const [gender, setGender] = useState(null); // null пока пол не выбран
+  const router = useRouter();
+  const [gender, setGender] = useState(null);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [finished, setFinished] = useState(false);
@@ -58,6 +60,13 @@ export default function Home() {
         <h1>Ваш результат архетипа</h1>
         <h2>{result.name} {result.symbol}</h2>
         <p>{result.description}</p>
+
+        <button
+          onClick={() => router.push(`/download?gender=${gender}`)}
+          style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px' }}
+        >
+          Скачать PDF с результатом
+        </button>
       </div>
     );
   }
