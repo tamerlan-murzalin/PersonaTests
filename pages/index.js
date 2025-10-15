@@ -1,67 +1,81 @@
-import { useState } from "react";
+import { useState } from 'react';
+import archetypesData from '../data/Archetypes.json';
+
+const questions = [
+  { id: 1, text: 'Вы любите рисковать?', options: [1, 2, 3] },
+  { id: 2, text: 'Вы предпочитаете планировать вместо импровизации?', options: [1, 2, 3] },
+  { id: 3, text: 'Вам нравится работать в команде?', options: [1, 2, 3] }
+];
 
 export default function Home() {
-  const [gender, setGender] = useState("male");
+  const [gender, setGender] = useState(null); // null пока пол не выбран
+  const [current, setCurrent] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [finished, setFinished] = useState(false);
 
-  const handleDownload = async () => {
-    try {
-      const res = await fetch('/api/generate-pdf', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ gender })
-});
-      if (!res.ok) {
-        const text = await res.text();
-        alert("Ошибка при генерации PDF: " + text);
-        return;
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `heartcode-${gender}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } catch (err) {
-      alert("Ошибка сети: " + err.message);
+  const handleAnswer = (value) => {
+    setAnswers([...answers, value]);
+    if (current + 1 < questions.length) {
+      setCurrent(current + 1);
+    } else {
+      setFinished(true);
     }
   };
 
-  return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>Выберите пол:</h1>
+  const calculateResult = () => {
+    const archetypes = archetypesData.archetypes[gender];
+    const sum = answers.reduce((acc, val) => acc + val, 0);
+    const index = sum % archetypes.length;
+    return archetypes[index];
+  };
 
-      <div style={{ margin: "20px" }}>
-        <label>
-          <input
-            type="radio"
-            name="gender"
-            value="male"
-            checked={gender === "male"}
-            onChange={() => setGender("male")}
-          />{" "}
-          Мужчина
-        </label>
-
-        <label style={{ marginLeft: "20px" }}>
-          <input
-            type="radio"
-            name="gender"
-            value="female"
-            checked={gender === "female"}
-            onChange={() => setGender("female")}
-          />{" "}
+  // Экран выбора пола
+  if (!gender) {
+    return (
+      <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
+        <h2>Выберите свой пол для теста</h2>
+        <button
+          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
+          onClick={() => setGender('female')}
+        >
           Женщина
-        </label>
+        </button>
+        <button
+          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
+          onClick={() => setGender('male')}
+        >
+          Мужчина
+        </button>
       </div>
+    );
+  }
 
-      <button
-        onClick={handleDownload}
-        style={{ padding: "10px 20px", fontSize: "16px" }}
-      >
-        Скачать PDF
-      </button>
+  // Экран результата
+  if (finished) {
+    const result = calculateResult();
+    return (
+      <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
+        <h1>Ваш результат архетипа</h1>
+        <h2>{result.name} {result.symbol}</h2>
+        <p>{result.description}</p>
+      </div>
+    );
+  }
+
+  // Экран текущего вопроса
+  const question = questions[current];
+  return (
+    <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
+      <h2>{question.text}</h2>
+      {question.options.map((opt, i) => (
+        <button
+          key={i}
+          onClick={() => handleAnswer(opt)}
+          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
+        >
+          Option {opt}
+        </button>
+      ))}
     </div>
   );
 }
