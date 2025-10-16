@@ -1,105 +1,78 @@
-import { useState } from 'react';
 import { useRouter } from 'next/router';
-import archetypesData from '../data/Archetypes.json';
-
-const questions = [
-  { id: 1, text: 'Вы любите рисковать?' },
-  { id: 2, text: 'Вы предпочитаете планировать вместо импровизации?' },
-  { id: 3, text: 'Вам нравится работать в команде?' },
-  { id: 4, text: 'Вы легко адаптируетесь к изменениям?' },
-  { id: 5, text: 'Вы стремитесь к лидерству?' },
-  { id: 6, text: 'Вы часто принимаете решения быстро?' },
-  { id: 7, text: 'Вы предпочитаете спокойствие вместо хаоса?' },
-  { id: 8, text: 'Вам нравится внимание со стороны других?' },
-  { id: 9, text: 'Вы считаете себя эмоциональным человеком?' },
-  { id: 10, text: 'Вы чаще действуете, чем долго думаете?' }
-];
 
 export default function Home() {
   const router = useRouter();
-  const [gender, setGender] = useState(null);
-  const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState([]);
-  const [finished, setFinished] = useState(false);
 
-  const handleAnswer = (value) => {
-    setAnswers([...answers, value]);
-    if (current + 1 < questions.length) {
-      setCurrent(current + 1);
-    } else {
-      setFinished(true);
+  const tests = [
+    {
+      title: "Personality Test",
+      description: "Узнайте, какой вы архетип личности. Этот тест поможет понять ваши сильные стороны, привычки и стиль общения.",
+      page: "/personality",
+      color: "#FF6B6B"
+    },
+    {
+      title: "Career Test",
+      description: "Определите свой карьерный архетип. Узнайте, какая работа и среда максимально раскрывают ваш потенциал.",
+      page: "/career",
+      color: "#4ECDC4"
     }
-  };
+  ];
 
-  const calculateResult = () => {
-    const archetypes = archetypesData.archetypes[gender];
-    const avg = answers.reduce((acc, val) => acc + val, 0) / answers.length;
-
-    let index = 0;
-    if (archetypes.length === 1) {
-      index = 0;
-    } else if (archetypes.length === 2) {
-      index = avg >= 3 ? 1 : 0;
-    } else {
-      if (avg < 2.5) index = 0;
-      else if (avg < 3.5) index = 1;
-      else index = 2;
-    }
-
-    return archetypes[index];
-  };
-
-  if (!gender) {
-    return (
-      <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
-        <h2>Выберите свой пол для теста</h2>
-        <button
-          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
-          onClick={() => setGender('female')}
-        >
-          Женщина
-        </button>
-        <button
-          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
-          onClick={() => setGender('male')}
-        >
-          Мужчина
-        </button>
-      </div>
-    );
-  }
-
-  if (finished) {
-    const result = calculateResult();
-    return (
-      <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
-        <h1>Ваш результат архетипа</h1>
-        <h2>{result.name} {result.symbol}</h2>
-        <p>{result.description}</p>
-
-        <button
-          onClick={() => router.push(`/download?gender=${gender}`)}
-          style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px' }}
-        >
-          Скачать PDF с результатом
-        </button>
-      </div>
-    );
-  }
-
-  const question = questions[current];
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
-      <h2>{question.text}</h2>
-      {[1, 2, 3, 4, 5].map((opt) => (
-        <button
-          key={opt}
-          onClick={() => handleAnswer(opt)}
-          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
-        >
-          {opt}
-        </button>
-      ))}
+    <div style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center', padding: '2rem' }}>
+      <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Welcome to Quiz Hub!</h1>
+      <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+        Выберите тест, чтобы лучше узнать себя или свой профессиональный путь. Каждый тест тщательно разработан для точной оценки.
+      </p>
+
+      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '2rem' }}>
+        {tests.map((test, idx) => (
+          <div
+            key={idx}
+            style={{
+              backgroundColor: test.color,
+              color: "#fff",
+              borderRadius: '12px',
+              padding: '2rem',
+              width: '300px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+              transition: 'transform 0.2s, box-shadow 0.2s'
+            }}
+            onClick={() => router.push(test.page)}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+            }}
+          >
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{test.title}</h2>
+            <p style={{ fontSize: '1rem' }}>{test.description}</p>
+            <button
+              style={{
+                marginTop: '1.5rem',
+                padding: '0.7rem 1.5rem',
+                fontSize: '1rem',
+                border: 'none',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                color: test.color,
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Начать тест
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <footer style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#555' }}>
+        © 2025 Quiz Hub. Все права защищены.
+      </footer>
     </div>
   );
 }
