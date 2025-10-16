@@ -3,9 +3,16 @@ import { useRouter } from 'next/router';
 import archetypesData from '../data/Archetypes.json';
 
 const questions = [
-  { id: 1, text: 'Вы любите рисковать?', options: [1, 2, 3] },
-  { id: 2, text: 'Вы предпочитаете планировать вместо импровизации?', options: [1, 2, 3] },
-  { id: 3, text: 'Вам нравится работать в команде?', options: [1, 2, 3] }
+  { id: 1, text: 'Вы любите рисковать?' },
+  { id: 2, text: 'Вы предпочитаете планировать вместо импровизации?' },
+  { id: 3, text: 'Вам нравится работать в команде?' },
+  { id: 4, text: 'Вы легко адаптируетесь к изменениям?' },
+  { id: 5, text: 'Вы стремитесь к лидерству?' },
+  { id: 6, text: 'Вы часто принимаете решения быстро?' },
+  { id: 7, text: 'Вы предпочитаете спокойствие вместо хаоса?' },
+  { id: 8, text: 'Вам нравится внимание со стороны других?' },
+  { id: 9, text: 'Вы считаете себя эмоциональным человеком?' },
+  { id: 10, text: 'Вы чаще действуете, чем долго думаете?' }
 ];
 
 export default function Home() {
@@ -26,12 +33,22 @@ export default function Home() {
 
   const calculateResult = () => {
     const archetypes = archetypesData.archetypes[gender];
-    const sum = answers.reduce((acc, val) => acc + val, 0);
-    const index = sum % archetypes.length;
+    const avg = answers.reduce((acc, val) => acc + val, 0) / answers.length;
+
+    let index = 0;
+    if (archetypes.length === 1) {
+      index = 0;
+    } else if (archetypes.length === 2) {
+      index = avg >= 3 ? 1 : 0;
+    } else {
+      if (avg < 2.5) index = 0;
+      else if (avg < 3.5) index = 1;
+      else index = 2;
+    }
+
     return archetypes[index];
   };
 
-  // Экран выбора пола
   if (!gender) {
     return (
       <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
@@ -52,7 +69,6 @@ export default function Home() {
     );
   }
 
-  // Экран результата
   if (finished) {
     const result = calculateResult();
     return (
@@ -71,18 +87,17 @@ export default function Home() {
     );
   }
 
-  // Экран текущего вопроса
   const question = questions[current];
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
       <h2>{question.text}</h2>
-      {question.options.map((opt, i) => (
+      {[1, 2, 3, 4, 5].map((opt) => (
         <button
-          key={i}
+          key={opt}
           onClick={() => handleAnswer(opt)}
           style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
         >
-          Option {opt}
+          {opt}
         </button>
       ))}
     </div>

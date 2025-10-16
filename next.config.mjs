@@ -1,9 +1,8 @@
 const nextConfig = {
-    reactStrictMode: true,
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
-    swcMinify: false,
+  reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
-export default nextConfig; // оставь только эту строку
+export default nextConfig;
