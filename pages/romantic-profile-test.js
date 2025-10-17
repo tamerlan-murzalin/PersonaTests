@@ -1,28 +1,34 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 import archetypesData from '../data/RomanticArchetypes.json';
 
 const questions = [
-  { id: 1, text: 'В отношениях ты предпочитаешь стабильность или приключения?' },
-  { id: 2, text: 'Тебе важно, чтобы партнёр уделял много времени совместным активностям?' },
-  { id: 3, text: 'Ты выражаешь любовь больше через поступки, чем словами?' },
-  { id: 4, text: 'Тебе легко принимать спонтанные решения вместе с партнёром?' },
-  { id: 5, text: 'Ты стремишься брать на себя ответственность и заботиться о бытовых вопросах?' },
-  { id: 6, text: 'Как часто ты действуешь, а не долго думаешь в решениях о паре?' },
-  { id: 7, text: 'Тебе важно эмоциональное тепло и поддержка в отношениях?' },
-  { id: 8, text: 'Нравится ли тебе быть источником вдохновения и драйва для партнёра?' },
-  { id: 9, text: 'Ты склонен анализировать поведение партнёра и строить планы?' },
-  { id: 10, text: 'Ты готов меняться ради долгосрочных целей пары?' }
+  { id: 1, text: 'Вы романтичны и любите мечтать?' },
+  { id: 2, text: 'Вам важны страсть и эмоции в отношениях?' },
+  { id: 3, text: 'Вы цените стабильность и надежность партнера?' },
+  { id: 4, text: 'Вам нравится исследовать свои эмоции?' },
+  { id: 5, text: 'Вы цените личную свободу в отношениях?' },
+  { id: 6, text: 'Любите заботиться о партнере и поддерживать его?' },
+  { id: 7, text: 'Вам важен интеллект и умение партнера поддерживать беседу?' },
+  { id: 8, text: 'Вам важна физическая и эмоциональная близость?' },
+  { id: 9, text: 'Вы склонны видеть идеальные отношения?' },
+  { id: 10, text: 'Любите изучать свои чувства и границы в отношениях?' }
 ];
 
 export default function RomanticProfileTest() {
-  const router = useRouter();
+  const [gender, setGender] = useState(null);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [finished, setFinished] = useState(false);
 
+  const selectGender = (g) => {
+    setGender(g);
+    setCurrent(0);
+    setAnswers([]);
+    setFinished(false);
+  };
+
   const handleAnswer = (value) => {
-    setAnswers(prev => [...prev, value]);
+    setAnswers([...answers, value]);
     if (current + 1 < questions.length) {
       setCurrent(current + 1);
     } else {
@@ -31,86 +37,117 @@ export default function RomanticProfileTest() {
   };
 
   const calculateResult = () => {
-    const archetypes = archetypesData.archetypes;
+    const archetypes = archetypesData[gender];
     let bestScore = -Infinity;
-    let best = archetypes[0];
+    let bestArchetype = archetypes[0];
 
     archetypes.forEach((arch) => {
       let score = 0;
       for (let i = 0; i < answers.length; i++) {
-        const w = (arch.weights && arch.weights[i]) ? arch.weights[i] : 3;
-        score += (5 - Math.abs(answers[i] - w));
+        score += 5 - Math.abs(answers[i] - arch.weights[i]);
       }
       if (score > bestScore) {
         bestScore = score;
-        best = arch;
+        bestArchetype = arch;
       }
     });
 
-    return best;
+    return bestArchetype;
   };
+
+  if (!gender) {
+    return (
+      <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
+        <h2>Выберите свой пол для теста</h2>
+        <button
+          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
+          onClick={() => selectGender('female')}
+        >
+          Женщина
+        </button>
+        <button
+          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
+          onClick={() => selectGender('male')}
+        >
+          Мужчина
+        </button>
+      </div>
+    );
+  }
 
   if (finished) {
     const result = calculateResult();
     return (
       <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
-        <h1>Ваш Romantic Profile</h1>
+        <h1>Ваш романтический архетип</h1>
         <h2>{result.name} {result.symbol}</h2>
         <p>{result.description}</p>
-
         <p><strong>Поведение:</strong> {result.behavior}</p>
+        <p><strong>Что привлекает:</strong> {result.attraction}</p>
         <p><strong>Проблемы:</strong> {result.problems}</p>
-
-        <h3>Советы</h3>
-        <ul style={{ textAlign: 'left', display: 'inline-block', marginTop: '0.5rem' }}>
-          {result.tips.map((t, i) => <li key={i}>{t}</li>)}
+        <p><strong>Советы:</strong></p>
+        <ul>
+          {result.tips.map((tip, idx) => <li key={idx}>{tip}</li>)}
         </ul>
 
-        <div style={{ marginTop: '20px' }}>
-          <button
-            onClick={() => router.push(`/download?type=romantic&result=${encodeURIComponent(result.name)}`)}
-            style={{ marginRight: '10px', padding: '10px 16px' }}
-          >
-            Скачать PDF с результатом
-          </button>
+        <button
+          onClick={async () => {
+            try {
+              const res = await fetch('/api/generate-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ testType: 'romantic', resultId: result.id })
+              });
 
-          <button
-            onClick={() => {
-              setCurrent(0);
-              setAnswers([]);
-              setFinished(false);
-            }}
-            style={{ padding: '10px 16px' }}
-          >
-            Пройти снова
-          </button>
-        </div>
+              if (!res.ok) {
+                const text = await res.text();
+                alert("Ошибка при генерации PDF: " + text);
+                return;
+              }
+
+              const blob = await res.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `romantic-${result.id}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+            } catch (err) {
+              alert("Ошибка сети: " + err.message);
+            }
+          }}
+          style={{
+            padding: '12px 24px',
+            fontSize: '16px',
+            backgroundColor: '#FF6B6B',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            marginTop: '20px'
+          }}
+        >
+          Скачать PDF
+        </button>
       </div>
     );
   }
 
-  const q = questions[current];
-
+  const question = questions[current];
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
-      <h2>Вопрос {current + 1} / {questions.length}</h2>
-      <h3 style={{ marginTop: '0.5rem' }}>{q.text}</h3>
-
-      <div style={{ marginTop: '1rem' }}>
-        {[1,2,3,4,5].map((n) => (
-          <button
-            key={n}
-            onClick={() => handleAnswer(n)}
-            style={{ margin: '0.4rem', padding: '0.6rem 1rem' }}
-          >
-            {n}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ marginTop: '1rem', color: '#666' }}>
-        <small>1 — совсем не подходит, 3 — нейтрально, 5 — полностью подходит</small>
-      </div>
+      <h2>{question.text}</h2>
+      {[1, 2, 3, 4, 5].map((opt) => (
+        <button
+          key={opt}
+          onClick={() => handleAnswer(opt)}
+          style={{ margin: '0.5rem', padding: '0.5rem 1rem' }}
+        >
+          {opt}
+        </button>
+      ))}
+      <p style={{ marginTop: '1rem' }}>Выберите оценку от 1 (совсем не подходит) до 5 (полностью подходит)</p>
     </div>
   );
 }
