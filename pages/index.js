@@ -15,6 +15,12 @@ export default function Home() {
       description: "Определите свой карьерный архетип. Узнайте, какая работа и среда максимально раскрывают ваш потенциал.",
       page: "/career",
       color: "#4ECDC4"
+    },
+    {
+      title: "Romantic Profile Test",
+      description: "Узнайте ваш романтический архетип, стиль общения и сильные стороны в отношениях.",
+      page: "/romantic-profile-test",
+      color: "#C86BFF"
     }
   ];
 
