@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import archetypesData from '../data/RomanticArchetypes.json';
 
 const questions = [
@@ -15,6 +16,7 @@ const questions = [
 ];
 
 export default function RomanticProfileTest() {
+  const router = useRouter(); // <-- важно!
   const [gender, setGender] = useState(null);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -80,7 +82,7 @@ export default function RomanticProfileTest() {
     return (
       <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
         <h1>Ваш романтический архетип</h1>
-        <h2>{result.name} {result.symbol}</h2>
+        <h2>{result.name}</h2>
         <p>{result.description}</p>
         <p><strong>Поведение:</strong> {result.behavior}</p>
         <p><strong>Что привлекает:</strong> {result.attraction}</p>
@@ -91,32 +93,7 @@ export default function RomanticProfileTest() {
         </ul>
 
         <button
-          onClick={async () => {
-            try {
-              const res = await fetch('/api/generate-pdf', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ testType: 'romantic', resultId: result.id })
-              });
-
-              if (!res.ok) {
-                const text = await res.text();
-                alert("Ошибка при генерации PDF: " + text);
-                return;
-              }
-
-              const blob = await res.blob();
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `romantic-${result.id}.pdf`;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-            } catch (err) {
-              alert("Ошибка сети: " + err.message);
-            }
-          }}
+          onClick={() => router.push(`/download?testType=romantic&resultId=${result.id}&gender=${gender}`)}
           style={{
             padding: '12px 24px',
             fontSize: '16px',
