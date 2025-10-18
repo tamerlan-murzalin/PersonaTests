@@ -25,7 +25,7 @@ export default function Home() {
     {
       title: "Communication Style Test",
       description: "Определите ваш стиль общения и узнайте, как лучше взаимодействовать с окружающими.",
-      page: "/communication-style-test",
+      page: "/communication",
       color: "#FFA94D"
     }
   ];
