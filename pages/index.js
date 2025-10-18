@@ -21,6 +21,12 @@ export default function Home() {
       description: "Узнайте ваш романтический архетип, стиль общения и сильные стороны в отношениях.",
       page: "/romantic-profile-test",
       color: "#C86BFF"
+    },
+    {
+      title: "Communication Style Test",
+      description: "Определите ваш стиль общения и узнайте, как лучше взаимодействовать с окружающими.",
+      page: "/communication-style-test",
+      color: "#FFA94D"
     }
   ];
 
