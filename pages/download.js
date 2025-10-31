@@ -1,57 +1,59 @@
+// pages/download.js
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 export default function Download() {
   const router = useRouter();
-  const { testType, resultId, gender } = router.query; 
+  const { testType, resultId, gender } = router.query;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (testType && resultId) {
-      setReady(true);
-    }
-  }, [testType, resultId]);
+    if (!router.isReady) return;
+    // Enable if we have gender OR (testType & resultId)
+    setReady(Boolean(gender) || (Boolean(testType) && Boolean(resultId)));
+  }, [router.isReady, testType, resultId, gender]);
 
   const handleDownload = async () => {
-    if (!testType || !resultId) {
-      alert("Невозможно скачать PDF: нет данных о тесте или результате");
-      return;
-    }
+    const payload =
+      (testType && resultId)
+        ? { testType, resultId, gender }
+        : { testType: "personality", resultId: 0, gender }; // safe fallback
 
     try {
       const res = await fetch("/api/generate-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ testType, resultId, gender })
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        alert("Ошибка при генерации PDF: " + text);
+      const contentType = res.headers.get("content-type") || "";
+      if (!res.ok || !contentType.includes("application/pdf")) {
+        // Read the server message for easier debugging
+        const errText = await res.text();
+        alert("PDF not returned. Server said:\n" + errText);
         return;
+        // (This prevents saving HTML/JSON as .pdf, which macOS Preview can't open)
       }
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
+      const name = `${payload.testType}-${payload.gender || "result"}.pdf`;
       a.href = url;
-      a.download = `${testType}-result.pdf`;
+      a.download = name;
       document.body.appendChild(a);
       a.click();
       a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert("Ошибка сети: " + err.message);
+      alert("Network error: " + err.message);
     }
   };
 
   return (
     <div style={{ textAlign: "center", marginTop: "50px", fontFamily: "Arial, sans-serif" }}>
       <h1>Ваш результат готов</h1>
-      <p>
-        {ready 
-          ? "Нажмите кнопку ниже, чтобы скачать PDF с результатом вашего теста" 
-          : "Подождите, данные загружаются..."}
-      </p>
+      <p>{ready ? "Нажмите, чтобы скачать PDF" : "Подождите, данные загружаются..."}</p>
 
       <button
         onClick={handleDownload}
@@ -64,7 +66,7 @@ export default function Download() {
           border: "none",
           borderRadius: "8px",
           cursor: ready ? "pointer" : "not-allowed",
-          marginTop: "20px"
+          marginTop: "20px",
         }}
       >
         Скачать PDF
