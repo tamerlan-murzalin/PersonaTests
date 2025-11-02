@@ -2,18 +2,42 @@
 import fs from "fs/promises";
 import path from "path";
 import Handlebars from "handlebars";
-import puppeteer from "puppeteer";
+
+// На Vercel используем puppeteer-core + @sparticuz/chromium
+import chromium from "@sparticuz/chromium";
+import puppeteerCore from "puppeteer-core";
+
+// Для локалки динамически подключим обычный puppeteer (если установлен)
+async function launchBrowser() {
+  const isServerless = !!(process.env.AWS_REGION || process.env.VERCEL);
+  if (isServerless) {
+    // Vercel / AWS Lambda
+    const executablePath = await chromium.executablePath();
+    return puppeteerCore.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      headless: chromium.headless, // true на сервере
+      executablePath,
+    });
+  } else {
+    // Локальная разработка — обычный puppeteer удобнее
+    const puppeteer = (await import("puppeteer")).default;
+    return puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
+}
 
 export const config = {
-  api: { bodyParser: { sizeLimit: "2mb" } }, // keep Node runtime (NOT edge)
+  api: { bodyParser: { sizeLimit: "2mb" } }, // обязательно Node runtime, не edge
 };
 
 function pickItem(list, resultId) {
   if (!Array.isArray(list) || list.length === 0) return null;
   if (resultId == null) return list[0];
-  // Try by id (string/number), then index
-  const foundById = list.find(a => a?.id != null && String(a.id) === String(resultId));
-  if (foundById) return foundById;
+  const byId = list.find(a => a?.id != null && String(a.id) === String(resultId));
+  if (byId) return byId;
   const idx = Number(resultId);
   if (!Number.isNaN(idx) && list[idx]) return list[idx];
   return list[0];
@@ -28,16 +52,13 @@ export default async function handler(req, res) {
 
   try {
     const { testType, resultId, gender } = req.body || {};
+    const type = testType || "personality"; // поддерживаем старые ссылки
 
-    // Support current + old flows: default to personality when testType missing
-    const type = testType || "personality";
-
-    // Map data file names (watch casing on Linux/Vercel)
     const dataMap = {
-      personality: "Archetypes.json",             // { archetypes: { female, male } }
-      romantic: "RomanticArchetypes.json",        // { female: [...], male: [...] }
-      communication: "CommunicationArchetypes.json", // { archetypes: [...] }
-      career: "CareerArchetypes.json",            // { archetypes: [...] }
+      personality: "Archetypes.json",                 // { archetypes: { female, male } }
+      romantic: "RomanticArchetypes.json",            // { female: [...], male: [...] }
+      communication: "CommunicationArchetypes.json",  // { archetypes: [...] }
+      career: "CareerArchetypes.json",                // { archetypes: [...] }
     };
     const dataFile = dataMap[type];
     if (!dataFile) {
@@ -46,11 +67,11 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Load data JSON
+    // Загружаем данные
     const dataPath = path.join(process.cwd(), "data", dataFile);
     const allData = JSON.parse(await fs.readFile(dataPath, "utf8"));
 
-    // Build list to pick from based on type
+    // Собираем список кандидатов по типу теста
     let list = [];
     if (type === "personality") {
       if (!gender) {
@@ -70,10 +91,9 @@ export default async function handler(req, res) {
       list = allData.archetypes ?? [];
     }
 
-    // Pick result
     let selected = pickItem(list, resultId);
 
-    // For romantic: use gender-specific description if present
+    // Для romantic берём гендер-специфичное описание, если есть
     if (selected && type === "romantic") {
       const gKey = gender === "male" ? "maleDescription" : "femaleDescription";
       if (selected[gKey]) selected = { ...selected, description: selected[gKey] };
@@ -85,25 +105,25 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Load Handlebars template
+    // Шаблон
     const tplPath = path.join(process.cwd(), "templates", "heartcode_template.html");
     const tplSrc = await fs.readFile(tplPath, "utf8");
     const template = Handlebars.compile(tplSrc, { noEscape: true });
-
     const html = template({ archetypes: [selected] });
 
-    const browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    // Puppeteer (локально — обычный, на Vercel — chromium)
+    const browser = await launchBrowser();
     const page = await browser.newPage();
+
+    // Иногда на serverless не хватает шрифтов; если увидишь квадратики — скажи, добавим NotoSans.
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    // IMPORTANT: ensure we return a Node Buffer
     const pdfBytes = await page.pdf({ format: "A4", printBackground: true });
     await browser.close();
-    const pdfBuffer = Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
 
+    const pdfBuffer = Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
     const fileName = `${type}-${gender || "result"}.pdf`;
+
     res.writeHead(200, {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${fileName}"`,
