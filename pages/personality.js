@@ -15,14 +15,13 @@ const questions = [
   { id: 10, text: 'Вы чаще действуете, чем долго думаете?' }
 ];
 
-export default function Home() {
+export default function PersonalityTest() {
   const router = useRouter();
   const [gender, setGender] = useState(null);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [finished, setFinished] = useState(false);
 
-  // Выбор пола с обнулением прогресса
   const selectGender = (g) => {
     setGender(g);
     setCurrent(0);
@@ -31,36 +30,34 @@ export default function Home() {
   };
 
   const handleAnswer = (value) => {
-    setAnswers([...answers, value]);
+    setAnswers((prev) => [...prev, value]);
     if (current + 1 < questions.length) {
-      setCurrent(current + 1);
+      setCurrent((c) => c + 1);
     } else {
       setFinished(true);
     }
   };
 
-  // Вычисление архетипа по наилучшему совпадению ответов
+  // Вычисляем лучший архетип по близости к weights
   const calculateResult = () => {
-    const archetypes = archetypesData.archetypes[gender];
+    const list = archetypesData.archetypes[gender] || [];
     let bestScore = -Infinity;
-    let bestArchetype = archetypes[0];
+    let best = list[0];
 
-    archetypes.forEach((arch) => {
+    list.forEach((arch) => {
       let score = 0;
       for (let i = 0; i < answers.length; i++) {
-        // Чем ближе ответ к весу архетипа, тем выше score
         score += 5 - Math.abs(answers[i] - arch.weights[i]);
       }
       if (score > bestScore) {
         bestScore = score;
-        bestArchetype = arch;
+        best = arch;
       }
     });
 
-    return bestArchetype;
+    return best;
   };
 
-  // Экран выбора пола
   if (!gender) {
     return (
       <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
@@ -81,24 +78,36 @@ export default function Home() {
     );
   }
 
-  // Экран результата
   if (finished) {
     const result = calculateResult();
+    const list = archetypesData.archetypes[gender] || [];
+    // Важно: используем ИНДЕКС как resultId (в этом файле нет id в JSON)
+    let idx = list.findIndex((a) => a.name === result.name);
+    if (idx < 0) idx = 0;
+
     return (
       <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
         <h1>Ваш результат архетипа</h1>
         <h2>{result.name} {result.symbol}</h2>
         <p>{result.description}</p>
-        <p><strong>Поведение:</strong> {result.behavior}</p>
-        <p><strong>Что привлекает:</strong> {result.attraction}</p>
-        <p><strong>Проблемы:</strong> {result.problems}</p>
-        <p><strong>Советы:</strong></p>
-        <ul>
-          {result.tips.map((tip, idx) => <li key={idx}>{tip}</li>)}
-        </ul>
+
+        {result.behavior && <p><strong>Поведение:</strong> {result.behavior}</p>}
+        {result.attraction && <p><strong>Что привлекает:</strong> {result.attraction}</p>}
+        {result.problems && <p><strong>Что может мешать:</strong> {result.problems}</p>}
+
+        {Array.isArray(result.tips) && result.tips.length > 0 && (
+          <>
+            <p><strong>Советы:</strong></p>
+            <ul>
+              {result.tips.map((tip, i) => <li key={i}>{tip}</li>)}
+            </ul>
+          </>
+        )}
 
         <button
-          onClick={() => router.push(`/download?gender=${gender}`)}
+          onClick={() =>
+            router.push(`/download?testType=personality&resultId=${idx}&gender=${gender}`)
+          }
           style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px' }}
         >
           Скачать PDF с результатом
@@ -107,8 +116,8 @@ export default function Home() {
     );
   }
 
-  // Экран текущего вопроса
   const question = questions[current];
+
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
       <h2>{question.text}</h2>

@@ -22,72 +22,64 @@ export default function CareerTest() {
   const [finished, setFinished] = useState(false);
 
   const handleAnswer = (value) => {
-    setAnswers([...answers, value]);
+    setAnswers((prev) => [...prev, value]);
     if (current + 1 < questions.length) {
-      setCurrent(current + 1);
+      setCurrent((c) => c + 1);
     } else {
       setFinished(true);
     }
   };
 
   const calculateResult = () => {
-    const archetypes = archetypesData.archetypes;
+    const list = archetypesData.archetypes;
     let bestScore = -Infinity;
-    let bestArchetype = archetypes[0];
+    let best = list[0];
 
-    archetypes.forEach((arch) => {
+    list.forEach((arch) => {
       let score = 0;
       for (let i = 0; i < answers.length; i++) {
-        const weight = arch.weights[i] || 3; // дефолтное нейтральное значение, если не задано
+        const weight = arch.weights?.[i] ?? 3;
         score += 5 - Math.abs(answers[i] - weight);
       }
       if (score > bestScore) {
         bestScore = score;
-        bestArchetype = arch;
+        best = arch;
       }
     });
 
-    return bestArchetype;
+    return best;
   };
 
   if (finished) {
     const result = calculateResult();
+    const list = archetypesData.archetypes;
+    let idx = list.findIndex((a) => a.name === result.name);
+    if (idx < 0) idx = 0;
+
     return (
       <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
         <h1>Ваш карьерный архетип</h1>
         <h2>{result.name} {result.symbol}</h2>
         <p>{result.description}</p>
 
-        <h3>Советы:</h3>
-        <ul>
-          {result.tips.map((tip, i) => (
-            <li key={i}>{tip}</li>
-          ))}
-        </ul>
+        {Array.isArray(result.tips) && result.tips.length > 0 && (
+          <>
+            <h3>Советы</h3>
+            <ul>{result.tips.map((t, i) => <li key={i}>{t}</li>)}</ul>
+          </>
+        )}
 
         <button
           style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px' }}
-          onClick={() => router.push('/download?type=career&result=' + encodeURIComponent(result.name))}
+          onClick={() => router.push(`/download?testType=career&resultId=${idx}`)}
         >
           Скачать PDF с результатом
-        </button>
-
-        <button
-          style={{ marginTop: '10px', padding: '10px 20px', fontSize: '16px' }}
-          onClick={() => {
-            setCurrent(0);
-            setAnswers([]);
-            setFinished(false);
-          }}
-        >
-          Пройти тест заново
         </button>
       </div>
     );
   }
 
   const question = questions[current];
-
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial', textAlign: 'center' }}>
       <h2>{question.text}</h2>
