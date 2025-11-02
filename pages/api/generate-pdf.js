@@ -3,46 +3,89 @@ import fs from "fs/promises";
 import path from "path";
 import Handlebars from "handlebars";
 
-// На Vercel используем puppeteer-core + @sparticuz/chromium
+// Vercel/serverless: chromium + puppeteer-core
 import chromium from "@sparticuz/chromium";
 import puppeteerCore from "puppeteer-core";
 
-// Для локалки динамически подключим обычный puppeteer (если установлен)
+// ───────────────────────────────────────────────────────────────────────────────
+// Runtime config: оставляем Node runtime (НЕ Edge)
+export const config = {
+  api: { bodyParser: { sizeLimit: "2mb" } },
+};
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Универсальный запуск браузера: локально → puppeteer, на Vercel → chromium
 async function launchBrowser() {
-  const isServerless = !!(process.env.AWS_REGION || process.env.VERCEL);
+  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_REGION);
+
   if (isServerless) {
-    // Vercel / AWS Lambda
     const executablePath = await chromium.executablePath();
     return puppeteerCore.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      headless: chromium.headless, // true на сервере
+      headless: chromium.headless,
       executablePath,
     });
-  } else {
-    // Локальная разработка — обычный puppeteer удобнее
+  }
+
+  // Локальная разработка
+  try {
     const puppeteer = (await import("puppeteer")).default;
     return puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
+  } catch {
+    // Если puppeteer не установлен — используем chromium как в serverless
+    const executablePath = await chromium.executablePath();
+    return puppeteerCore.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      headless: chromium.headless,
+      executablePath,
+    });
   }
 }
 
-export const config = {
-  api: { bodyParser: { sizeLimit: "2mb" } }, // обязательно Node runtime, не edge
-};
+// ───────────────────────────────────────────────────────────────────────────────
+// Помощники выбора данных
+function buildListByType({ type, gender, allData }) {
+  // Структуры:
+  // personality: { archetypes: { female: [...], male: [...] } }
+  // romantic:    { female: [...], male: [...] }
+  // others:      { archetypes: [...] }
+  if (type === "personality") {
+    if (!gender) throw new Error("Missing gender for personality");
+    return allData.archetypes?.[gender] ?? [];
+  }
+  if (type === "romantic") {
+    if (!gender) throw new Error("Missing gender for romantic");
+    return allData?.[gender] ?? [];
+  }
+  return allData.archetypes ?? [];
+}
 
 function pickItem(list, resultId) {
   if (!Array.isArray(list) || list.length === 0) return null;
-  if (resultId == null) return list[0];
-  const byId = list.find(a => a?.id != null && String(a.id) === String(resultId));
-  if (byId) return byId;
-  const idx = Number(resultId);
-  if (!Number.isNaN(idx) && list[idx]) return list[idx];
+
+  // 1) по id (строка/число)
+  if (resultId != null) {
+    const byId = list.find(
+      (a) => a?.id != null && String(a.id) === String(resultId)
+    );
+    if (byId) return byId;
+
+    // 2) по индексу
+    const idx = Number(resultId);
+    if (Number.isInteger(idx) && idx >= 0 && idx < list.length) return list[idx];
+  }
+
+  // 3) fallback: первый (лучше вернуть 400, но оставим мягкий fallback)
   return list[0];
 }
 
+// ───────────────────────────────────────────────────────────────────────────────
+// Основной handler
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.writeHead(405, { "Content-Type": "application/json" });
@@ -52,13 +95,14 @@ export default async function handler(req, res) {
 
   try {
     const { testType, resultId, gender } = req.body || {};
-    const type = testType || "personality"; // поддерживаем старые ссылки
+    const type = testType || "personality"; // совместимость со старыми ссылками
 
+    // Карта файлов данных (важна правильная КАПИТАЛИЗАЦИЯ имён!)
     const dataMap = {
-      personality: "Archetypes.json",                 // { archetypes: { female, male } }
-      romantic: "RomanticArchetypes.json",            // { female: [...], male: [...] }
-      communication: "CommunicationArchetypes.json",  // { archetypes: [...] }
-      career: "CareerArchetypes.json",                // { archetypes: [...] }
+      personality: "Archetypes.json",
+      romantic: "RomanticArchetypes.json",
+      communication: "CommunicationArchetypes.json",
+      career: "CareerArchetypes.json",
     };
     const dataFile = dataMap[type];
     if (!dataFile) {
@@ -67,66 +111,57 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Загружаем данные
+    // Читаем данные и шаблон
     const dataPath = path.join(process.cwd(), "data", dataFile);
     const allData = JSON.parse(await fs.readFile(dataPath, "utf8"));
 
-    // Собираем список кандидатов по типу теста
-    let list = [];
-    if (type === "personality") {
-      if (!gender) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: "Missing gender for personality" }));
-        return;
-      }
-      list = allData.archetypes?.[gender] ?? [];
-    } else if (type === "romantic") {
-      if (!gender) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: "Missing gender for romantic" }));
-        return;
-      }
-      list = allData?.[gender] ?? [];
-    } else {
-      list = allData.archetypes ?? [];
-    }
-
+    const list = buildListByType({ type, gender, allData });
     let selected = pickItem(list, resultId);
-
-    // Для romantic берём гендер-специфичное описание, если есть
-    if (selected && type === "romantic") {
-      const gKey = gender === "male" ? "maleDescription" : "femaleDescription";
-      if (selected[gKey]) selected = { ...selected, description: selected[gKey] };
-    }
 
     if (!selected) {
       res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "No result found" }));
+      res.end(
+        JSON.stringify({ message: "Invalid resultId for given testType/gender" })
+      );
       return;
     }
 
-    // Шаблон
-    const tplPath = path.join(process.cwd(), "templates", "heartcode_template.html");
-    const tplSrc = await fs.readFile(tplPath, "utf8");
-    const template = Handlebars.compile(tplSrc, { noEscape: true });
-    const html = template({ archetypes: [selected] });
+    // Для romantic используем гендер-специфичное описание, если есть
+    if (type === "romantic") {
+      const gKey = gender === "male" ? "maleDescription" : "femaleDescription";
+      if (selected[gKey]) {
+        selected = { ...selected, description: selected[gKey] };
+      }
+    }
 
-    // Puppeteer (локально — обычный, на Vercel — chromium)
+    const templatePath = path.join(
+      process.cwd(),
+      "templates",
+      "heartcode_template.html"
+    );
+    const templateSrc = await fs.readFile(templatePath, "utf8");
+    const compile = Handlebars.compile(templateSrc, { noEscape: true });
+
+    const html = compile({ archetypes: [selected] });
+
+    // Рендер PDF
     const browser = await launchBrowser();
     const page = await browser.newPage();
-
-    // Иногда на serverless не хватает шрифтов; если увидишь квадратики — скажи, добавим NotoSans.
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    const pdfBytes = await page.pdf({ format: "A4", printBackground: true });
+    const pdfBytes = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "12mm", right: "12mm", bottom: "12mm", left: "12mm" },
+    });
     await browser.close();
 
     const pdfBuffer = Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
-    const fileName = `${type}-${gender || "result"}.pdf`;
+    const filename = `${type}-${gender || "result"}.pdf`;
 
     res.writeHead(200, {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${fileName}"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Content-Length": String(pdfBuffer.length),
       "Cache-Control": "no-store",
     });
@@ -134,6 +169,11 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error("PDF generation failed:", e);
     res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "PDF generation failed", error: String(e?.message || e) }));
+    res.end(
+      JSON.stringify({
+        message: "PDF generation failed",
+        error: String(e?.message || e),
+      })
+    );
   }
 }

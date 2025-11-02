@@ -1,90 +1,102 @@
-import { useRouter } from 'next/router';
+// pages/index.js
+import Head from "next/head";
+import Link from "next/link";
 
 export default function Home() {
-  const router = useRouter();
-
-  const tests = [
-    {
-      title: "Personality Test",
-      description: "Узнайте, какой вы архетип личности. Этот тест поможет понять ваши сильные стороны, привычки и стиль общения.",
-      page: "/personality",
-      color: "#FF6B6B"
-    },
-    {
-      title: "Career Test",
-      description: "Определите свой карьерный архетип. Узнайте, какая работа и среда максимально раскрывают ваш потенциал.",
-      page: "/career",
-      color: "#4ECDC4"
-    },
-    {
-      title: "Romantic Profile Test",
-      description: "Узнайте ваш романтический архетип, стиль общения и сильные стороны в отношениях.",
-      page: "/romantic-profile-test",
-      color: "#C86BFF"
-    },
-    {
-      title: "Communication Style Test",
-      description: "Определите ваш стиль общения и узнайте, как лучше взаимодействовать с окружающими.",
-      page: "/communication",
-      color: "#FFA94D"
-    }
-  ];
-
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center', padding: '2rem' }}>
-      <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Welcome to Quiz Hub!</h1>
-      <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
-        Выберите тест, чтобы лучше узнать себя или свой профессиональный путь. Каждый тест тщательно разработан для точной оценки.
-      </p>
+    <>
+      <Head>
+        <title>HeartCode — Тесты личности и отношений</title>
+        <meta
+          name="description"
+          content="4 быстрых теста с персональными PDF-отчётами: романтический профиль, стиль личности, коммуникация и карьера."
+        />
+      </Head>
 
-      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '2rem' }}>
-        {tests.map((test, idx) => (
-          <div
-            key={idx}
-            style={{
-              backgroundColor: test.color,
-              color: "#fff",
-              borderRadius: '12px',
-              padding: '2rem',
-              width: '300px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-              transition: 'transform 0.2s, box-shadow 0.2s'
-            }}
-            onClick={() => router.push(test.page)}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-            }}
-          >
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{test.title}</h2>
-            <p style={{ fontSize: '1rem' }}>{test.description}</p>
-            <button
-              style={{
-                marginTop: '1.5rem',
-                padding: '0.7rem 1.5rem',
-                fontSize: '1rem',
-                border: 'none',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(255,255,255,0.9)',
-                color: test.color,
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              Начать тест
-            </button>
+      <main className="site">
+        <section className="hero">
+          <div className="container">
+            <h1 className="hero__title">Раскройте свой код личности</h1>
+            <p className="hero__subtitle">
+              4 коротких теста → понятные результаты → персональный PDF.
+            </p>
+            <div className="hero__cta">
+              <Link className="btn btn--primary" href="#tests">
+                Выбрать тест
+              </Link>
+              <Link className="btn btn--ghost" href="/tests/romantic">
+                Попробовать романтический 💘
+              </Link>
+            </div>
           </div>
-        ))}
-      </div>
+        </section>
 
-      <footer style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#555' }}>
-        © 2025 Quiz Hub. Все права защищены.
-      </footer>
-    </div>
+        <section id="tests" className="section">
+          <div className="container">
+            <h2 className="section__title">Выберите тест</h2>
+            <div className="grid">
+              <article className="card">
+                <div className="card__icon">💘</div>
+                <h3 className="card__title">Романтический профиль</h3>
+                <p className="card__text">
+                  Узнайте свой стиль в любви: сильные стороны, риски и советы
+                  для гармоничных отношений.
+                </p>
+                <Link className="btn btn--block" href="/tests/romantic">
+                  Открыть страницу теста
+                </Link>
+              </article>
+
+              <article className="card">
+                <div className="card__icon">🧠</div>
+                <h3 className="card__title">Стиль личности</h3>
+                <p className="card__text">
+                  Узнайте, как вы принимаете решения, взаимодействуете с миром и
+                  что вас заряжает.
+                </p>
+                <Link className="btn btn--block" href="/tests/personality">
+                  Открыть страницу теста
+                </Link>
+              </article>
+
+              <article className="card">
+                <div className="card__icon">🗣️</div>
+                <h3 className="card__title">Коммуникация</h3>
+                <p className="card__text">
+                  Сильные и слабые стороны в общении, типичные паттерны и
+                  практические рекомендации.
+                </p>
+                <Link className="btn btn--block" href="/tests/communication">
+                  Открыть страницу теста
+                </Link>
+              </article>
+
+              <article className="card">
+                <div className="card__icon">💼</div>
+                <h3 className="card__title">Карьера</h3>
+                <p className="card__text">
+                  Ваши рабочие предпочтения, роли в команде и подсказки для роста.
+                </p>
+                <Link className="btn btn--block" href="/tests/career">
+                  Открыть страницу теста
+                </Link>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <footer className="footer">
+          <div className="container footer__inner">
+            <span>© {new Date().getFullYear()} HeartCode</span>
+            <nav className="footer__nav">
+              <Link href="/tests/romantic">Романтический</Link>
+              <Link href="/tests/personality">Личность</Link>
+              <Link href="/tests/communication">Коммуникация</Link>
+              <Link href="/tests/career">Карьера</Link>
+            </nav>
+          </div>
+        </footer>
+      </main>
+    </>
   );
 }
