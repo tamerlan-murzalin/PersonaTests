@@ -358,3 +358,149 @@ html,body{background:var(--bg); color:var(--text);}
   font-size: 14px;
   margin-top: 20px;
 }
+/* ===== Стиль страницы тарифов ===== */
+.pricing-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #0b0d10;
+  color: #e8edf3;
+}
+
+.pricing-card {
+  background: #1b2230;
+  padding: 40px 50px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 800px;
+  text-align: center;
+}
+
+.pricing-title {
+  font-size: 32px;
+  color: #fff;
+}
+
+.pricing-subtitle {
+  font-size: 18px;
+  color: #9aa4b2;
+  margin-bottom: 30px;
+}
+
+.pricing-table {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.pricing-option {
+  background: #12161c;
+  padding: 30px;
+  border-radius: 12px;
+  width: 250px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.pricing-option:hover {
+  transform: translateY(-5px);
+}
+
+.pricing-price {
+  font-size: 28px;
+  font-weight: bold;
+  color: #5fe1cc;
+  margin: 15px 0;
+}
+
+.pricing-description {
+  color: #9aa4b2;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.pricing-btn {
+  background-color: #5fe1cc;
+  color: #0b0d10;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pricing-btn:hover {
+  background-color: #4fcca3;
+}
+/* ===== Стиль страницы "О сервисе" ===== */
+.about-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #0b0d10;
+  color: #e8edf3;
+}
+
+.about-card {
+  background: #1b2230;
+  padding: 40px 50px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 800px;
+  text-align: center;
+}
+
+.about-title {
+  font-size: 32px;
+  color: #fff;
+}
+
+.about-subtitle {
+  font-size: 18px;
+  color: #9aa4b2;
+  margin-bottom: 30px;
+}
+
+.about-list {
+  list-style: none;
+  padding: 0;
+  color: #9aa4b2;
+  margin-bottom: 30px;
+}
+
+.about-list li {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.info-text {
+  color: #9aa4b2;
+  font-size: 14px;
+}
+/* Глобальные стили */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #0b0d10;
+  color: #e8edf3;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
