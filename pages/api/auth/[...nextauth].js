@@ -2,7 +2,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
-import { createTransport } from "nodemailer"; // Для Email-провайдера
+import { createTransport } from "nodemailer";  // Для Email-провайдера
 
 export default NextAuth({
   // Указываем провайдеров для аутентификации
@@ -19,9 +19,9 @@ export default NextAuth({
     }),
   ],
 
-  // Страницы для отображения в процессе аутентификации (настраиваемый UI)
+  // Страница для отображения UI
   pages: {
-    signIn: '/auth/login',  // Ссылка на страницу входа
+    signIn: '/login',  // Ссылка на страницу входа (измени на /login)
   },
 
   // Callback для хранения user_id в сессии
