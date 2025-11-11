@@ -9,7 +9,7 @@ export default function Home() {
         <title>HeartCode — Тесты личности и отношений</title>
         <meta
           name="description"
-          content="4 быстрых теста → понятные результаты → персональный PDF. Романтический профиль, стиль личности, коммуникация и карьера."
+          content="5 быстрых тестов → понятные результаты → персональный PDF. Романтический профиль, стресс и выгорание, стиль личности, коммуникация и карьера."
         />
       </Head>
 
@@ -98,6 +98,13 @@ export default function Home() {
               </article>
 
               <article className="hc-card">
+                <div className="hc-card__icon">😮‍💨</div>
+                <h3 className="hc-card__title">Стресс и выгорание</h3>
+                <p className="hc-card__text">Быстрый скрининг и рекомендации на 7 дней.</p>
+                <Link className="hc-btn hc-btn--block" href="/tests/stress">Открыть страницу теста</Link>
+              </article>
+
+              <article className="hc-card">
                 <div className="hc-card__icon">🧠</div>
                 <h3 className="hc-card__title">Стиль личности</h3>
                 <p className="hc-card__text">Как вы принимаете решения и что вас заряжает.</p>
@@ -148,7 +155,7 @@ export default function Home() {
                 <footer>— А., 31 год</footer>
               </blockquote>
               <blockquote className="hc-quote">
-                <p>«Прошёл все 4 теста — реально помогает понять себя и задачи на работе.»</p>
+                <p>«Прошёл все 5 тестов — реально помогает понять себя и задачи на работе.»</p>
                 <footer>— Т., 24 года</footer>
               </blockquote>
             </div>
