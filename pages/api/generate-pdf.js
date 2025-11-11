@@ -49,11 +49,21 @@ async function launchBrowser() {
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Помощники выбора данных
+function normalizeList(allData) {
+  // Поддержка двух форматов:
+  // 1) массив архетипов: [ ... ]
+  // 2) объект с массивом: { archetypes: [ ... ] }
+  if (Array.isArray(allData)) return allData;
+  if (allData && Array.isArray(allData.archetypes)) return allData.archetypes;
+  return [];
+}
+
 function buildListByType({ type, gender, allData }) {
   // Структуры:
   // personality: { archetypes: { female: [...], male: [...] } }
-  // romantic:    { female: [...], male: [...] }
-  // others:      { archetypes: [...] }
+  // romantic   : { female: [...], male: [...] }
+  // stress     : [ ... ]   ИЛИ   { archetypes: [...] }
+  // career/communication: чаще { archetypes: [...] } (но поддержим и массив)
   if (type === "personality") {
     if (!gender) throw new Error("Missing gender for personality");
     return allData.archetypes?.[gender] ?? [];
@@ -62,7 +72,8 @@ function buildListByType({ type, gender, allData }) {
     if (!gender) throw new Error("Missing gender for romantic");
     return allData?.[gender] ?? [];
   }
-  return allData.archetypes ?? [];
+  // stress / career / communication / etc.
+  return normalizeList(allData);
 }
 
 function pickItem(list, resultId) {
@@ -97,12 +108,13 @@ export default async function handler(req, res) {
     const { testType, resultId, gender } = req.body || {};
     const type = testType || "personality"; // совместимость со старыми ссылками
 
-    // Карта файлов данных (важна правильная КАПИТАЛИЗАЦИЯ имён!)
+    // Карта файлов данных (ВАЖНА КАПИТАЛИЗАЦИЯ!)
     const dataMap = {
       personality: "Archetypes.json",
       romantic: "RomanticArchetypes.json",
       communication: "CommunicationArchetypes.json",
       career: "CareerArchetypes.json",
+      stress: "StressArchetypes.json", // ← ДОБАВЛЕНО
     };
     const dataFile = dataMap[type];
     if (!dataFile) {
